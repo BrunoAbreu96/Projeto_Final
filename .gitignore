@@ -15,7 +15,12 @@ __pycache__/
 *.db
 *.sqlite
 *.sqlite3
-visteon_porsche_line
 
-# Cópia de segurança original — manter fora do Git
+# Cópias de segurança e scripts auxiliares locais
 original/
+dashboard_antes_*.py
+corrigir_auth.py
+
+# Ficheiros temporários
+*.tmp
+*.bak
