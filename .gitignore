@@ -1,0 +1,21 @@
+﻿# Ambiente Python
+.venv/
+venv/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+
+# Credenciais e configurações privadas
+.env
+.env.*
+!.env.example
+.streamlit/secrets.toml
+
+# Bases de dados locais
+*.db
+*.sqlite
+*.sqlite3
+visteon_porsche_line
+
+# Cópia de segurança original — manter fora do Git
+original/
