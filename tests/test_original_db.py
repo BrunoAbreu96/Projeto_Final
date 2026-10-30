@@ -1,9 +1,17 @@
-﻿import sqlite3
+import sqlite3
 from pathlib import Path
+import os
+
+import pytest
 
 
+@pytest.mark.private_data
+@pytest.mark.skipif(
+    not os.environ.get("BRUNUS_ORIGINAL_DB"),
+    reason="Verificação privada opcional: definir BRUNUS_ORIGINAL_DB explicitamente.",
+)
 def test_base_original_integra():
-    caminho = Path("original/visteon_porsche_line.db").resolve()
+    caminho = Path(os.environ["BRUNUS_ORIGINAL_DB"]).resolve()
     assert caminho.exists(), "Base de dados original não encontrada."
 
     ligacao = sqlite3.connect(

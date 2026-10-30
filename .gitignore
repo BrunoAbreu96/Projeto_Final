@@ -1,4 +1,4 @@
-﻿# Ambiente Python
+# Ambiente Python
 .venv/
 venv/
 __pycache__/
@@ -24,3 +24,7 @@ corrigir_auth.py
 # Ficheiros temporários
 *.tmp
 *.bak
+
+# Resultados locais de validação e relatórios de demonstração
+tmp/
+output/
