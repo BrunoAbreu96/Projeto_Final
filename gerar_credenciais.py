@@ -1,5 +1,6 @@
-﻿import hashlib
+import hashlib
 import secrets
+from pathlib import Path
 import tkinter as tk
 from tkinter import simpledialog, messagebox
 
@@ -55,8 +56,11 @@ for perfil in ("operador", "tecnico", "master"):
 if len(hashes) == 3:
     resultado = "[credenciais]\n" + "\n".join(hashes) + "\n"
 
+    caminho = Path(__file__).resolve().parent / ".streamlit" / "secrets.toml"
+    caminho.parent.mkdir(parents=True, exist_ok=True)
+
     with open(
-        ".streamlit/secrets.toml",
+        caminho,
         "w",
         encoding="utf-8",
         newline="\n"
