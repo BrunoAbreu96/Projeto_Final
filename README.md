@@ -4,6 +4,8 @@ Aplicação de formação para monitorizar duas linhas de produção, oito esta�
 
 Os dados de demonstração são sintéticos. O indicador implementado é a **qualidade FTT**; o projeto não calcula OEE completo nem está ligado a um PLC real.
 
+O GitHub disponibiliza o código e a documentação. Nesta versão, a aplicação é iniciada com Python e utilizada no navegador do computador onde é executada; abrir a página do repositório não inicia a aplicação.
+
 ## 1. Requisitos
 
 - Python **3.11 ou superior**. Esta revisão foi verificada em Windows com Python **3.14.7**.
@@ -26,6 +28,8 @@ python -m venv .venv
 
 Se já tem uma cópia local, entre nessa pasta. Antes de utilizar uma base anterior, consulte a secção de migração.
 
+Também pode obter uma cópia ZIP do repositório. Nesse caso, extraia-a, abra o PowerShell na pasta que contém `dashboard.py` e continue a partir de `python -m venv .venv`.
+
 ### 2.1. Preparar a base e as estações
 
 ```powershell
@@ -43,6 +47,8 @@ O esquema único é `sql/criar_base_dados.sql`, utilizado também pelo simulador
 ```
 
 O utilitário pede e confirma uma palavra-passe para cada perfil, cria `.streamlit` se necessário e guarda hashes PBKDF2-SHA256 em `.streamlit/secrets.toml`. O ficheiro contém `[credenciais]` e as chaves `operador_hash`, `tecnico_hash` e `master_hash`.
+
+Cada palavra-passe deve ter pelo menos seis caracteres. Quem avalia ou instala uma cópia nova define as suas próprias credenciais através deste utilitário.
 
 O ficheiro é local e está excluído do Git. Não publique palavras-passe nem hashes. Se cancelar antes de completar os três perfis, as credenciais existentes não são substituídas.
 
@@ -62,13 +68,33 @@ Noutro terminal, na mesma pasta:
 
 Abra o endereço apresentado pelo Streamlit. O simulador continua até premir `Ctrl+C`. Uma linha com avaria ativa deixa de produzir até à sua resolução.
 
-Para uma execução finita com três peças OK:
+Para executar três ciclos com evento OK numa base sem avarias ativas:
 
 ```powershell
 .\.venv\Scripts\python.exe .\simulador_continuo.py --cycles 3 --interval 0 --seed 42 --event OK
 ```
 
 O simulador aceita também `--event REJEITADA`, `--event ERRO`, `--db CAMINHO` e `--init-only`. Um evento forçado continua a respeitar uma linha parada por avaria.
+
+### 2.4. Roteiro para o formador testar a partir do GitHub
+
+1. Obter uma cópia do repositório e instalar as dependências, como descrito na secção 2.
+2. Criar a base e as oito estações com `init --demo`, sem precisar de bases industriais privadas.
+3. Executar `gerar_credenciais.py` e definir as palavras-passe dos três perfis.
+4. Iniciar o simulador e o dashboard em dois terminais e abrir o endereço local apresentado pelo Streamlit.
+5. Entrar como `master` ou `tecnico`, observar uma avaria e usar **Validar intervenção técnica**. Se as duas linhas tiverem avarias ativas, a produção fica parada até serem resolvidas.
+6. Selecionar a data e o turno que contêm os dados gerados, consultar os indicadores e descarregar o PDF. Um período sem dados apresenta uma mensagem; não deve mostrar o histórico de outro turno.
+7. Executar os testes da secção 7. O teste de aceitação reproduz automaticamente o fluxo de base nova, produção, avaria, resolução e relatório com dados sintéticos.
+
+Para provocar uma avaria sem esperar por um evento aleatório, pare o simulador contínuo, execute o comando seguinte na base de teste e volte a iniciar o simulador:
+
+```powershell
+.\.venv\Scripts\python.exe .\simulador_continuo.py --cycles 1 --interval 0 --seed 42 --event ERRO
+```
+
+Se a linha escolhida já tiver uma avaria ativa, o comando respeita o bloqueio. Resolva as ocorrências existentes antes de repetir.
+
+O endereço `localhost` apresentado pelo Streamlit corresponde ao computador que está a executar a aplicação. Para testar noutro computador, o formador deve iniciar a sua própria cópia seguindo estes passos. A versão descrita neste README não fornece um serviço público alojado.
 
 ## 3. Escolher outra base
 
@@ -162,7 +188,7 @@ Os testes normais usam bases temporárias e dados sintéticos. Cobrem esquema e 
 
 O teste privado da base original fica ignorado por defeito. Só lê o caminho explicitamente indicado por `BRUNUS_ORIGINAL_DB`, em modo de leitura. Não é necessário para a suite normal nem acompanha os dados da entrega.
 
-A suite final teve **109 testes aprovados e 1 teste privado ignorado**, tanto no ambiente do projeto como numa instalação nova. Os quatro avisos emitidos são de compatibilidade futura do Pandas numa rotina de gráficos do Streamlit; não houve falhas. Consulte `RELATORIO_TECNICO.md` para resultados e limitações.
+Na validação registada em **30/10/2026**, a suite teve **109 testes aprovados e 1 teste privado ignorado**, tanto no ambiente do projeto como numa instalação nova. Os quatro avisos emitidos são de compatibilidade futura do Pandas numa rotina de gráficos do Streamlit; não houve falhas. Consulte `RELATORIO_TECNICO.md` para resultados e limitações.
 
 ## 8. Estrutura e limites
 
@@ -181,6 +207,6 @@ A suite final teve **109 testes aprovados e 1 teste privado ignorado**, tanto no
 
 As datas são horas civis locais sem fuso. Numa mudança de hora de verão/inverno, a duração pode não representar o tempo físico decorrido; esta revisão não resolve essa ambiguidade. Não há aquisição real de PLC, OEE completo ou certificação industrial. Uma utilização real exige validar relógios, dados, infraestrutura e controlo de acessos.
 
-Credenciais, bases, backups, ambientes virtuais e saídas de teste estão excluídos do Git. Esta revisão local não implica publicação no GitHub.
+Credenciais, bases, backups, ambientes virtuais e saídas de teste estão excluídos do Git. A cópia obtida pelo GitHub é preparada localmente através dos comandos deste README.
 
 **Autor:** Bruno Abreu. **Repositório:** [Projeto_Final](https://github.com/BrunoAbreu96/Projeto_Final). **Critérios:** [issue #1](https://github.com/BrunoAbreu96/Projeto_Final/issues/1).
