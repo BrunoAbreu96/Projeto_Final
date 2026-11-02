@@ -1,5 +1,7 @@
 # BRUNUS MES — Auditoria técnica inicial
 
+> **Registo histórico — nota acrescentada em 02/11/2026.** Este documento conserva o diagnóstico da versão inicial e as condições do ambiente nessa análise. Vários problemas aqui descritos foram corrigidos em revisões posteriores; esta lista não representa o estado atual da aplicação. Consulte o [relatório técnico atualizado](RELATORIO_TECNICO.md) para a implementação, os testes executados e as limitações ainda existentes. O texto original abaixo é preservado para documentar a evolução do projeto.
+
 ## Âmbito e proteção do projeto
 
 Esta pasta contém uma cópia dos ficheiros recebidos. Os ficheiros originais não foram alterados. A base de dados copiada contém os dados que existiam no momento da análise; usar sempre uma cópia separada para testes que possam criar, atualizar ou apagar registos.

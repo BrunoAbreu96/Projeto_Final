@@ -1,6 +1,8 @@
 # BRUNUS MES — Manufacturing Execution System
 
-Aplicação de formação para monitorizar duas linhas de produção, oito estações, qualidade das peças e avarias. Inclui simulador, autenticação por perfis e relatórios PDF por data e turno.
+**UFCD/UC 5425 — Opção B: Projeto livre.**
+
+Aplicação de formação para monitorizar linhas de produção, qualidade das peças e avarias. A configuração inicial de demonstração inclui duas linhas e oito estações. Inclui simulador, autenticação por perfis, administração e relatórios PDF por data, turno e linha.
 
 Os dados de demonstração são sintéticos. O indicador implementado é a **qualidade FTT**; o projeto não calcula OEE completo nem está ligado a um PLC real.
 
@@ -13,6 +15,24 @@ O GitHub disponibiliza o código e a documentação. Nesta versão, a aplicaçã
 - Tkinter para o utilitário gráfico de credenciais; no instalador Python para Windows está normalmente incluído.
 
 As versões diretas verificadas estão fixadas em `requirements.txt`: Streamlit 1.66.1, streamlit-autorefresh 1.0.1, Pandas 3.1.0, ReportLab 5.1.0, asyncua 2.1.0 e pytest 9.1.1. A biblioteca asyncua está reservada para trabalho futuro; não constitui uma ligação industrial ativa.
+
+### Arranque da demonstração
+
+Depois de instalar as dependências da secção 2, abra **`iniciar_demo.bat` por duplo clique**, no Windows. O lançador usa o Python da `.venv`, abre a aplicação no navegador e apresenta na janela os acessos dos três perfis.
+
+- A demonstração fica em `data/demo/`, com base e credenciais sintéticas próprias, excluídas do Git. Os dados e os acessos são conservados entre arranques.
+- O duplo clique usa **modo manual**: o master escolhe os eventos no separador **Administração → Demonstração**, permitindo gerar e verificar cada evento.
+- Na primeira preparação, são criados dados dos três turnos do dia anterior e alguns eventos no instante da preparação. A data desses registos mantém-se nos arranques seguintes.
+- Mantenha a janela aberta. **Ctrl+C** termina os processos iniciados pelo lançador.
+
+Alternativas no PowerShell:
+
+```powershell
+.\.venv\Scripts\python.exe .\iniciar_demo.py --manual
+.\.venv\Scripts\python.exe .\iniciar_demo.py
+```
+
+O primeiro comando usa eventos manuais; o segundo inicia também o simulador contínuo. `--no-browser` evita abrir o navegador; `--prepare-only` prepara os ficheiros sem iniciar processos. Se precisar de redefinir os acessos sintéticos, use `--prepare-only --regenerate-credentials`. As credenciais da demonstração também ficam em `data/demo/acesso_demo.json`, apenas neste computador.
 
 ## 2. Instalação nova
 
@@ -128,7 +148,7 @@ Depois de verificar os dados migrados, configure `BRUNUS_DB_PATH` para essa base
 
 ## 5. Perfis e operações
 
-| Perfil | Consultar e gerar PDF | Resolver avarias | Encerrar ativas e limpar demonstração |
+| Perfil | Consultar e gerar PDF | Resolver avarias | Administração, backups e demonstração |
 |---|---|---|---|
 | `operador` | Sim | Não | Não |
 | `tecnico` | Sim | Sim | Não |
@@ -136,11 +156,39 @@ Depois de verificar os dados migrados, configure `BRUNUS_DB_PATH` para essa base
 
 As permissões são verificadas nos serviços, além da visibilidade dos botões. Resolver uma avaria e atualizar a cabine faz parte da mesma transação. Só ocorrências ativas são resolvidas; a cabine permanece em erro se tiver outra avaria ativa.
 
+O início de sessão inclui **Ajuda para entrar**, com as diferenças entre perfis e a indicação do utilitário local para voltar a definir credenciais.
+
+Na monitorização, os contadores mostram as linhas configuradas, as linhas paradas e as avarias ativas agora. Uma avaria suspende a produção de toda a linha no simulador; **SEM AVARIA LOCAL** apenas indica que a estação não tem uma avaria registada. As linhas e estações apresentadas são lidas da base, com cartões em duas colunas por linha.
+
 O encerramento global afeta apenas avarias ativas e preserva as datas das resolvidas. **Eliminar dados de demonstração** apaga todo o histórico de produção e avarias da base selecionada, exige confirmação explícita e está limitado a `master`. A eliminação e a reposição das estações são atómicas.
+
+### 5.1. Configuração de linhas e estações
+
+O master dispõe de **Administração → Linhas e estações** para adicionar estações a uma linha existente ou criar uma linha com a primeira estação. Pode editar o processo; mudanças de linha/nome e remoção são recusadas quando a estação tem avarias associadas ou a linha já tem produção. A remoção exige confirmação explícita e nunca apaga histórico.
+
+Os serviços validam campos e duplicados, usando uma transação por alteração. Não foi alterado o esquema SQL. O simulador conserva a configuração ao reiniciar; só povoa automaticamente uma base nova. Para uma base existente sem estações, use `init --demo` apenas se pretender adicionar a configuração de demonstração.
+
+### 5.2. Criar eventos sem terminal
+
+No modo iniciado por `iniciar_demo.bat`, entre como master e abra **Administração → Demonstração**. Escolha a linha, o evento **Peça OK**, **Peça rejeitada** ou **Avaria na linha**, e carregue em **Gerar evento**. Uma linha parada recusa novos eventos até resolução técnica. A resolução continua em **Monitorização em tempo real → Intervenções pendentes**.
+
+O serviço exige master e `BRUNUS_DEMO_MODE=1`, definido pelo lançador para a base sintética. No arranque normal do dashboard, os controlos de geração manual ficam indisponíveis.
+
+### 5.3. Cópias de segurança e recuperação
+
+Em **Administração → Cópias de segurança**, o master pode criar e descarregar uma cópia SQLite consistente. As cópias ficam numa pasta `backups` junto à base selecionada. Não incluem as palavras-passe, que estão no ficheiro de credenciais da instalação.
+
+Para recuperar, selecione uma cópia válida, confirme a operação e use **Recuperar cópia**. A aplicação valida esquema, dados, referências e estados, guarda primeiro o estado anterior e substitui o conteúdo numa única transação. Uma falha desfaz as alterações. Não substitui o ficheiro aberto nem usa uma cópia simples de uma base que esteja a ser escrita.
+
+A recuperação aceita apenas cópias compatíveis da pasta dessa base; não é uma ferramenta de reparação de SQLite corrompido. No simulador contínuo, podem surgir novos eventos depois do ponto recuperado. O modo manual permite verificar o estado recuperado antes de gerar outros eventos. Guarde também cópias fora do computador para proteção contra avaria do equipamento.
 
 ## 6. Relatórios por data e turno
 
-Selecione na barra lateral a **data de início do turno** e o turno:
+A aplicação abre com a **data de início do turno** e o turno correspondentes à hora local do computador. Entre as 00:00 e a 01:00, seleciona o turno 2 do dia anterior. Pode consultar outro período na barra lateral; a atualização automática preserva essa escolha. O botão **Voltar ao turno atual** repõe a data e o turno atuais.
+
+O filtro **Linha do relatório** permite consultar todas as linhas ou apenas uma. Produção, qualidade, avarias, paragens e estimativas usam a mesma seleção; o PDF identifica essa linha. A lista inclui linhas do histórico mesmo sem estações atualmente configuradas. Os separadores, os filtros e as mensagens da administração mantêm-se durante as atualizações automáticas.
+
+Horários disponíveis:
 
 | Turno | Início | Fim exclusivo |
 |---|---|---|
@@ -188,7 +236,7 @@ Os testes normais usam bases temporárias e dados sintéticos. Cobrem esquema e 
 
 O teste privado da base original fica ignorado por defeito. Só lê o caminho explicitamente indicado por `BRUNUS_ORIGINAL_DB`, em modo de leitura. Não é necessário para a suite normal nem acompanha os dados da entrega.
 
-Na validação registada em **30/10/2026**, a suite teve **109 testes aprovados e 1 teste privado ignorado**, tanto no ambiente do projeto como numa instalação nova. Os quatro avisos emitidos são de compatibilidade futura do Pandas numa rotina de gráficos do Streamlit; não houve falhas. Consulte `RELATORIO_TECNICO.md` para resultados e limitações.
+Na validação completa de **02/11/2026**, a suite teve **216 testes aprovados e 1 teste privado ignorado**, com 32 avisos de compatibilidade futura do Pandas numa rotina de gráficos do Streamlit. Inclui turnos, filtros por linha, interface, configuração, eventos manuais, backup/restauro e lançador. O arranque real, recusa de duplicados e encerramento dos processos foram também verificados. A revisão de 30/10 teve 109 testes aprovados também numa instalação nova. Consulte `RELATORIO_TECNICO.md` para os resultados de cada revisão e limitações.
 
 ## 8. Estrutura e limites
 
@@ -199,10 +247,16 @@ Na validação registada em **30/10/2026**, a suite teve **109 testes aprovados 
 | `brunus_mes/database.py` | Ligações, inicialização e migração |
 | `brunus_mes/repository.py` | Consultas de monitorização |
 | `brunus_mes/services.py` | Resolução, encerramento e limpeza autorizados |
+| `brunus_mes/configuration.py` | Configuração de estações com proteção do histórico |
+| `brunus_mes/backups.py` | Cópias consistentes e recuperação transacional |
+| `brunus_mes/demo.py` | Eventos manuais autorizados no modo de demonstração |
+| `brunus_mes/ui_admin.py` | Formulários do separador Administração |
 | `brunus_mes/reporting.py` | Turnos, dados do período e indicadores |
 | `brunus_mes/pdf_report.py` | PDF a partir do modelo calculado |
 | `sql/criar_base_dados.sql` | Esquema único |
+| [docs/MODELO_DADOS.md](docs/MODELO_DADOS.md) | Diagrama e explicação do esquema atual |
 | `simulador_continuo.py` | Eventos sintéticos |
+| `iniciar_demo.py` / `iniciar_demo.bat` | Arranque isolado da demonstração |
 | `tests/` | Validação com bases temporárias |
 
 As datas são horas civis locais sem fuso. Numa mudança de hora de verão/inverno, a duração pode não representar o tempo físico decorrido; esta revisão não resolve essa ambiguidade. Não há aquisição real de PLC, OEE completo ou certificação industrial. Uma utilização real exige validar relógios, dados, infraestrutura e controlo de acessos.

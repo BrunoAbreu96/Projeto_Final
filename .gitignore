@@ -10,6 +10,7 @@ __pycache__/
 .env.*
 !.env.example
 .streamlit/secrets.toml
+data/demo/
 
 # Bases de dados locais
 *.db
