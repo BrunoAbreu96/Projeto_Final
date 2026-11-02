@@ -5,12 +5,16 @@ from datetime import datetime
 import random
 import time
 
-from brunus_mes.database import connect, initialize_database, seed_demo_stations
+from brunus_mes.database import connect, get_db_path, initialize_database, seed_demo_stations
 
 
 def iniciar_base_dados_avancada(path=None):
+    is_new = not get_db_path(path).exists()
     initialize_database(path)
-    seed_demo_stations(path)
+    # O arranque não deve recriar estações removidas nem misturar a configuração
+    # do utilizador com as oito estações do exemplo inicial.
+    if is_new:
+        seed_demo_stations(path)
 
 
 def ciclo_fabrica_avancado(path=None, event=None, rng=None, now=None, main_line=None):
