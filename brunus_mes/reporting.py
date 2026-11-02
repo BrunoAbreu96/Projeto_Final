@@ -59,6 +59,23 @@ def shift_interval(day: date | str, shift: int | str) -> tuple[datetime, datetim
     return start, end
 
 
+def current_shift(now: datetime | None = None) -> tuple[date, int]:
+    """Devolve a data de início e o número do turno na hora local indicada.
+
+    Entre a meia-noite e a 01h ainda decorre o turno 2 do dia anterior.
+    Os limites seguem os intervalos [início, fim) de ``shift_interval``.
+    """
+    local_now = _local_datetime(datetime.now() if now is None else now)
+    day = local_now.date()
+    if local_now.hour < 1:
+        return day - timedelta(days=1), 2
+    if local_now.hour < 8:
+        return day, 3
+    if local_now.hour < 17:
+        return day, 1
+    return day, 2
+
+
 def union_seconds(intervals: list[tuple[datetime, datetime]]) -> float:
     """Duração da união, sem somar duas vezes intervalos sobrepostos."""
     ordered = sorted((start, end) for start, end in intervals if end > start)
@@ -101,6 +118,7 @@ class ShiftReport:
     estimated_downtime_cost: float = 0.0
     estimated_margin: float = 0.0
     estimated_result: float = 0.0
+    main_line: str | None = None
 
     @property
     def has_data(self) -> bool:
@@ -112,6 +130,7 @@ def build_shift_report(
     shift: int | str,
     path=None,
     now: datetime | None = None,
+    main_line: str | None = None,
 ) -> ShiftReport:
     """Lê produção e avarias numa única transação de leitura SQLite.
 
@@ -120,14 +139,18 @@ def build_shift_report(
     Paragem: interseção com o turno, terminando no fim conhecido ou na consulta.
     MTTR: duração completa das ocorrências iniciadas no turno e reparadas até
     à consulta. Pode incluir a parte da reparação posterior ao fim do turno.
+    ``main_line`` limita ambas as consultas a uma linha; None inclui todas.
     """
     from .database import connect
 
+    if main_line is not None:
+        if not isinstance(main_line, str) or not main_line.strip():
+            raise ValueError("Selecione uma linha válida ou todas as linhas.")
     number = _shift_number(shift)
     start, end = shift_interval(day, number)
     snapshot = _local_datetime(now or datetime.now())
     effective_end = max(start, min(end, snapshot))
-    report = ShiftReport(start.date(), number, TURNOS[number], start, end, snapshot, effective_end)
+    report = ShiftReport(start.date(), number, TURNOS[number], start, end, snapshot, effective_end, main_line=main_line)
     if snapshot < start:
         return report
 
@@ -140,8 +163,9 @@ def build_shift_report(
                WHERE julianday(timestamp) >= julianday(?) - 1.0 / 86400
                  AND julianday(timestamp) < julianday(?) + 1.0 / 86400
                  AND julianday(timestamp) <= julianday(?) + 1.0 / 86400
+                 AND (? IS NULL OR main_line = ?)
                ORDER BY julianday(timestamp), id""",
-            (start.isoformat(), end.isoformat(), snapshot.isoformat()),
+            (start.isoformat(), end.isoformat(), snapshot.isoformat(), main_line, main_line),
         ).fetchall()
         # Includes occurrences with zero duration and carry-in breakdowns.
         breakdown_rows = conn.execute(
@@ -153,8 +177,9 @@ def build_shift_report(
                  AND (julianday(r.timestamp_inicio) >= julianday(?) - 1.0 / 86400
                       OR r.timestamp_fim IS NULL
                       OR julianday(r.timestamp_fim) > julianday(?) - 1.0 / 86400)
+                 AND (? IS NULL OR c.main_line = ?)
                ORDER BY julianday(r.timestamp_inicio), r.id""",
-            (end.isoformat(), snapshot.isoformat(), start.isoformat(), start.isoformat()),
+            (end.isoformat(), snapshot.isoformat(), start.isoformat(), start.isoformat(), main_line, main_line),
         ).fetchall()
 
     # SQL fetches a one-second margin because julianday rounds milliseconds.

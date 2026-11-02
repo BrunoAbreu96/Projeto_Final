@@ -50,6 +50,7 @@ def generate_shift_pdf(report: ShiftReport) -> bytes:
 
     paragraph("BRUNUS MES - Relatório de turno", "Title")
     paragraph(f"<b>Data de início:</b> {report.day.strftime('%d/%m/%Y')} - {escape(report.shift_label)}")
+    paragraph(f"<b>Linha:</b> {escape(report.main_line) if report.main_line is not None else 'Todas as linhas'}")
     paragraph(f"<b>Intervalo:</b> {report.start:%d/%m/%Y %H:%M} (incluído) a {report.end:%d/%m/%Y %H:%M} (excluído).")
     paragraph(f"<b>Instante da consulta:</b> {report.snapshot:%d/%m/%Y %H:%M:%S}. Horas locais, sem fuso horário.")
     paragraph(f"<b>Dados e paragens limitados a:</b> {report.effective_end:%d/%m/%Y %H:%M:%S}.")

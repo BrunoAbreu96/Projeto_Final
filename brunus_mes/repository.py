@@ -16,3 +16,13 @@ def active_breakdowns(path=None):
             FROM registo_avarias r JOIN cabines c ON c.id = r.cabine_id
             WHERE r.status = 'ATIVO' ORDER BY r.timestamp_inicio, r.id
         """)]
+
+
+def report_lines(path=None):
+    """Inclui linhas do histórico mesmo que não tenham estações configuradas."""
+    with connect(path) as connection:
+        return [row[0] for row in connection.execute("""
+            SELECT main_line FROM cabines
+            UNION SELECT main_line FROM historico_producao
+            ORDER BY main_line
+        """)]
