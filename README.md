@@ -16,7 +16,7 @@ O GitHub disponibiliza o código e a documentação. Nesta versão, a aplicaçã
 
 As versões diretas verificadas estão fixadas em `requirements.txt`: Streamlit 1.66.1, streamlit-autorefresh 1.0.1, Pandas 3.1.0, ReportLab 5.1.0, asyncua 2.1.0 e pytest 9.1.1. A biblioteca asyncua está reservada para trabalho futuro; não constitui uma ligação industrial ativa.
 
-### Arranque da demonstração
+## Executar
 
 Depois de instalar as dependências da secção 2, abra **`iniciar_demo.bat` por duplo clique**, no Windows. O lançador usa o Python da `.venv`, abre a aplicação no navegador e apresenta na janela os acessos dos três perfis.
 
@@ -70,7 +70,7 @@ O utilitário pede e confirma uma palavra-passe para cada perfil, cria `.streaml
 
 Cada palavra-passe deve ter pelo menos seis caracteres. Quem avalia ou instala uma cópia nova define as suas próprias credenciais através deste utilitário.
 
-O ficheiro é local e está excluído do Git. Não publique palavras-passe nem hashes. Se cancelar antes de completar os três perfis, as credenciais existentes não são substituídas.
+O Streamlit lê as credenciais em `.streamlit/secrets.toml`. O SQLite local usa um ficheiro e dispensa uma conta de servidor. O `.gitignore` exclui `.streamlit/secrets.toml`, `.env` e variantes locais de `.env`. Se cancelar antes de completar os três perfis, as credenciais existentes são conservadas.
 
 ### 2.3. Iniciar simulador e dashboard
 
@@ -98,21 +98,12 @@ O simulador aceita também `--event REJEITADA`, `--event ERRO`, `--db CAMINHO` e
 
 ### 2.4. Roteiro para o formador testar a partir do GitHub
 
-1. Obter uma cópia do repositório e instalar as dependências, como descrito na secção 2.
-2. Criar a base e as oito estações com `init --demo`, sem precisar de bases industriais privadas.
-3. Executar `gerar_credenciais.py` e definir as palavras-passe dos três perfis.
-4. Iniciar o simulador e o dashboard em dois terminais e abrir o endereço local apresentado pelo Streamlit.
-5. Entrar como `master` ou `tecnico`, observar uma avaria e usar **Validar intervenção técnica**. Se as duas linhas tiverem avarias ativas, a produção fica parada até serem resolvidas.
-6. Selecionar a data e o turno que contêm os dados gerados, consultar os indicadores e descarregar o PDF. Um período sem dados apresenta uma mensagem; não deve mostrar o histórico de outro turno.
-7. Executar os testes da secção 7. O teste de aceitação reproduz automaticamente o fluxo de base nova, produção, avaria, resolução e relatório com dados sintéticos.
-
-Para provocar uma avaria sem esperar por um evento aleatório, pare o simulador contínuo, execute o comando seguinte na base de teste e volte a iniciar o simulador:
-
-```powershell
-.\.venv\Scripts\python.exe .\simulador_continuo.py --cycles 1 --interval 0 --seed 42 --event ERRO
-```
-
-Se a linha escolhida já tiver uma avaria ativa, o comando respeita o bloqueio. Resolva as ocorrências existentes antes de repetir.
+1. Obter uma cópia do repositório e instalar as dependências da secção 2.
+2. Abrir `iniciar_demo.bat` no Windows, conforme a secção [Executar](#executar), e entrar como `master` com a credencial apresentada na janela do lançador.
+3. Em **Administração → Demonstração**, escolher uma linha disponível e gerar **Peça OK**. Se ambas estiverem paradas, resolver primeiro as avarias de uma linha.
+4. Na mesma linha, gerar **Avaria na linha**. Em **Monitorização em tempo real**, confirmar a paragem e usar **Intervenções pendentes → Validar intervenção técnica** para a resolver.
+5. Selecionar a data de início do turno, o turno dos eventos e a linha usada. Consultar os indicadores e usar **Descarregar PDF do turno** na barra lateral.
+6. Executar os testes da secção 7 para reproduzir automaticamente o fluxo de base nova, produção, avaria, resolução e relatório com dados sintéticos.
 
 O endereço `localhost` apresentado pelo Streamlit corresponde ao computador que está a executar a aplicação. Para testar noutro computador, o formador deve iniciar a sua própria cópia seguindo estes passos. A versão descrita neste README não fornece um serviço público alojado.
 
@@ -236,7 +227,7 @@ Os testes normais usam bases temporárias e dados sintéticos. Cobrem esquema e 
 
 O teste privado da base original fica ignorado por defeito. Só lê o caminho explicitamente indicado por `BRUNUS_ORIGINAL_DB`, em modo de leitura. Não é necessário para a suite normal nem acompanha os dados da entrega.
 
-Na validação completa de **02/11/2026**, a suite teve **216 testes aprovados e 1 teste privado ignorado**, com 32 avisos de compatibilidade futura do Pandas numa rotina de gráficos do Streamlit. Inclui turnos, filtros por linha, interface, configuração, eventos manuais, backup/restauro e lançador. O arranque real, recusa de duplicados e encerramento dos processos foram também verificados. A revisão de 30/10 teve 109 testes aprovados também numa instalação nova. Consulte `RELATORIO_TECNICO.md` para os resultados de cada revisão e limitações.
+Em **06/11/2026**, uma cópia limpa do GitHub foi instalada em Windows com Python 3.14.7. A aplicação arrancou em modo manual e a suite teve **216 testes aprovados e 1 teste opcional ignorado**, com 30 avisos de compatibilidade futura do Pandas numa rotina de gráficos do Streamlit. Consulte o [relatório técnico](RELATORIO_TECNICO.md#7-testes-e-validação) para os resultados das revisões anteriores e os detalhes da validação.
 
 ## 8. Estrutura e limites
 

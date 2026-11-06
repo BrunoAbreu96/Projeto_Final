@@ -6,7 +6,7 @@
 
 **Modalidade:** Opção B — Projeto livre, UFCD/UC 5425.
 
-**Revisão:** 2 de novembro de 2026
+**Revisão:** 6 de novembro de 2026
 
 **Referência:** [issue #1 — consolidar dados, relatórios e testes](https://github.com/BrunoAbreu96/Projeto_Final/issues/1)
 
@@ -211,7 +211,9 @@ As estimativas financeiras usam margem fictícia de 100 EUR/peça OK, custo de 3
 
 Os parâmetros e a natureza simulada constam da interface e PDF. Não são lucro efetivamente apurado. O documento identifica data, turno, limites, consulta, totais e critérios. Sem dados, a interface mostra uma mensagem em vez de exportar histórico global como relatório de turno.
 
-## 7. Testes efetivamente executados em 30/10/2026
+## 7. Testes e validação
+
+### 7.1. Validação de 30/10/2026
 
 As validações usam bases temporárias e dados sintéticos. A mesma suite foi executada no ambiente do projeto e numa instalação nova; as duas execuções não são somadas como testes distintos.
 
@@ -246,6 +248,14 @@ New-Item -ItemType Directory -Force -Path .\tmp | Out-Null
 ```
 
 O teste privado da base original só é ativado por `BRUNUS_ORIGINAL_DB`, abre em modo de leitura e é ignorado por defeito. A entrega não depende de dados industriais privados.
+
+### 7.2. Validação da cópia publicada em 06/11/2026
+
+A revisão `26ccd92` foi clonada do GitHub para uma pasta separada. Em Windows com Python 3.14.7, foi criado um ambiente virtual novo, foram instaladas as dependências de `requirements.txt` e o comando `pip check` concluiu sem incompatibilidades.
+
+O comando `.\.venv\Scripts\python.exe .\iniciar_demo.py --manual --no-browser` preparou a base sintética e iniciou o Streamlit. A página inicial e a verificação de saúde responderam ambas com HTTP 200.
+
+A suite dessa cópia teve **216 testes aprovados e 1 teste opcional ignorado**, em 26,84 segundos. Inclui o teste de aceitação de produção simulada, avaria, resolução e relatório PDF. Foram registados 30 avisos `Pandas4Warning` da rotina de gráficos do Streamlit.
 
 ## 8. Instalação e critérios da issue
 
